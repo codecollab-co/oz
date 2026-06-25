@@ -1,0 +1,3 @@
+# Native SSH Protocol Integration in Rust
+
+We decided to implement SSH terminal sessions by integrating a native SSH client protocol library in the Rust backend (such as `russh` or `ssh2`) rather than spawning the host machine's external `ssh` binary as a subshell. Native protocol integration allows the Tauri backend to intercept credential prompts, handle multi-factor authentication (MFA) interactively, manage keys securely via our OS Keychain setup, and eventually layer SFTP filesystem transfers over the same connection, which would be extremely complex to coordinate using standard shell pipes.

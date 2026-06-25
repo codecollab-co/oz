@@ -1,0 +1,3 @@
+# Backend AI HTTP Proxy Layer
+
+We decided to route and execute all external LLM API requests (streaming and non-streaming) through a dedicated Rust network proxy layer rather than making HTTP fetch calls directly from the frontend webview. The frontend React application invokes Tauri IPC commands, and the Rust backend retrieves the decrypted API key from the host Keychain, injects the authentication headers, performs the request with SSRF protection, and streams the chunks back to the webview. This ensures absolute credential isolation, as API keys are never exposed to the JavaScript runtime environment.
