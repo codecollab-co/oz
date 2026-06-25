@@ -63,7 +63,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Write Apple API key to disk
-        if: startsWith(matrix.platform, 'macos')
+        if: startsWith(matrix.platform, 'macos') && secrets.APPLE_API_KEY_PATH != ''
         shell: bash
         env:
           KEY_CONTENT: ${{ secrets.APPLE_API_KEY_PATH }}
@@ -71,6 +71,14 @@ jobs:
           mkdir -p "$HOME/private_keys"
           printf '%s' "$KEY_CONTENT" > "$HOME/private_keys/AuthKey.p8"
           echo "APPLE_API_KEY_PATH=$HOME/private_keys/AuthKey.p8" >> "$GITHUB_ENV"
+
+      - name: Disable updater signing if keys are missing
+        if: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY == '' }}
+        shell: bash
+        run: |
+          echo "No tauri signing key found, disabling updater artifacts creation"
+          jq '.bundle.createUpdaterArtifacts = false' src-tauri/tauri.conf.json > src-tauri/tauri.conf.json.tmp
+          mv src-tauri/tauri.conf.json.tmp src-tauri/tauri.conf.json
 
       - id: tauri
         uses: tauri-apps/tauri-action@v0
@@ -93,6 +101,7 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+          disableCodesigning: ${{ secrets.APPLE_CERTIFICATE == '' }}
 
       - name: Zip release binary (Windows)
         if: matrix.platform == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
@@ -172,12 +181,17 @@ jobs:
 
           cp "$WORK/$BASENAME" "$APPIMAGE"
 
-          rm -f "$APPIMAGE.sig"
-          pnpm tauri signer sign "$APPIMAGE"
-
           TAG="${GITHUB_REF_NAME}"
-          gh release upload "$TAG" "$APPIMAGE" "$APPIMAGE.sig" \
-            --clobber --repo "$GITHUB_REPOSITORY"
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            rm -f "$APPIMAGE.sig"
+            pnpm tauri signer sign "$APPIMAGE"
+            gh release upload "$TAG" "$APPIMAGE" "$APPIMAGE.sig" \
+              --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            echo "Skipping AppImage signing as private key is missing"
+            gh release upload "$TAG" "$APPIMAGE" \
+              --clobber --repo "$GITHUB_REPOSITORY"
+          fi
 
   # Patch the AppImage signature into the combined updater manifest. Runs once,
   # after every matrix leg has finished merging its platform into latest.json,
@@ -186,7 +200,7 @@ jobs:
   # a signature, so both are patched.
   patch-appimage-updater:
     needs: publish-tauri
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') && secrets.TAURI_SIGNING_PRIVATE_KEY != ''
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -217,7 +231,7 @@ jobs:
           gh release upload "$TAG" latest.json --clobber --repo "$GITHUB_REPOSITORY"
 
   publish-npm:
-    needs: [publish-tauri, patch-appimage-updater]
+    needs: publish-tauri
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
