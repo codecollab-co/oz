@@ -62,6 +62,34 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Configure Tauri updater signing key
+        env:
+          KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          PASS: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        if: env.KEY != ''
+        shell: bash
+        run: |
+          echo "TAURI_SIGNING_PRIVATE_KEY=${{ env.KEY }}" >> "$GITHUB_ENV"
+          echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=${{ env.PASS }}" >> "$GITHUB_ENV"
+
+      - name: Configure Apple signing certificate
+        env:
+          CERT: ${{ secrets.APPLE_CERTIFICATE }}
+          PASS: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+          ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          KEY: ${{ secrets.APPLE_API_KEY }}
+        if: env.CERT != ''
+        shell: bash
+        run: |
+          echo "APPLE_CERTIFICATE=${{ env.CERT }}" >> "$GITHUB_ENV"
+          echo "APPLE_CERTIFICATE_PASSWORD=${{ env.PASS }}" >> "$GITHUB_ENV"
+          echo "APPLE_SIGNING_IDENTITY=${{ env.IDENTITY }}" >> "$GITHUB_ENV"
+          echo "APPLE_TEAM_ID=${{ env.TEAM }}" >> "$GITHUB_ENV"
+          echo "APPLE_API_ISSUER=${{ env.ISSUER }}" >> "$GITHUB_ENV"
+          echo "APPLE_API_KEY=${{ env.KEY }}" >> "$GITHUB_ENV"
+
       - name: Write Apple API key to disk
         env:
           KEY_CONTENT: ${{ secrets.APPLE_API_KEY_PATH }}
@@ -86,16 +114,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "Oz ${{ github.ref_name }}"
@@ -103,7 +121,6 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
-          disableCodesigning: ${{ secrets.APPLE_CERTIFICATE == '' }}
 
       - name: Zip release binary (Windows)
         if: matrix.platform == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
