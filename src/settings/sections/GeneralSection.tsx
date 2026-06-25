@@ -15,8 +15,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { usePreferencesStore } from "@/modules/settings/preferences";
-import type { ThemePref } from "@/modules/settings/store";
+import { usePreferencesStore } from "@/features/layout-chrome/settings/preferences";
+import type { ThemePref } from "@/features/layout-chrome/settings/store";
 import {
   TERMINAL_FONT_SIZES,
   TERMINAL_SCROLLBACK_PRESETS,
@@ -38,8 +38,8 @@ import {
   setTerminalWebglEnabled,
   setVimMode,
   setZoomLevel,
-} from "@/modules/settings/store";
-import { useTheme } from "@/modules/theme";
+} from "@/features/layout-chrome/settings/store";
+import { useTheme } from "@/features/layout-chrome/theme";
 import {
   ComputerIcon,
   Moon02Icon,

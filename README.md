@@ -23,15 +23,15 @@ Oz is a lightweight open-source terminal (ADE) built on Tauri 2 + Rust and React
 
 <table>
   <tr>
-    <td align="center"><img src="docs/terminal.png" alt="Terminal" /><br/><sub>Multi-tab terminal with WebGL rendering</sub></td>
-    <td align="center"><img src="docs/themes.png" alt="Themes and background image" /><br/><sub>Custom themes, presets, and background images</sub></td>
+    <td align="center"><img src="gallery-media/pty_terminal_shell.png" alt="Terminal" /><br/><sub>Multi-tab terminal with WebGL rendering</sub></td>
+    <td align="center"><img src="gallery-media/chrome_ui_themes.png" alt="Themes and background image" /><br/><sub>Custom themes, presets, and background images</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/web-preview.png" alt="Web preview" /><br/><sub>Web preview of local dev servers</sub></td>
-    <td align="center"><img src="docs/source-control.png" alt="Source control and git graph" /><br/><sub>Source control panel with git graph in history</sub></td>
+    <td align="center"><img src="gallery-media/browser_live_preview.png" alt="Web preview" /><br/><sub>Web preview of local dev servers</sub></td>
+    <td align="center"><img src="gallery-media/vcs_git_control.png" alt="Source control and git graph" /><br/><sub>Source control panel with git graph in history</sub></td>
   </tr>
   <tr>
-    <td colspan="2" align="center"><img src="docs/ai-workflow.png" alt="AI window" /><br/><sub>Agentic AI workflow with edit diffs in the code editor</sub></td>
+    <td colspan="2" align="center"><img src="gallery-media/ai_companion_flow.png" alt="AI window" /><br/><sub>Agentic AI workflow with edit diffs in the code editor</sub></td>
   </tr>
 </table>
 

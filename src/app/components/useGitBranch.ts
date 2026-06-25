@@ -1,4 +1,4 @@
-import { native } from "@/modules/ai/lib/native";
+import { native } from "@/features/ai-companion/ai/lib/native";
 import { useEffect, useState } from "react";
 
 // `nonce` forces a re-resolve (e.g. on command finish) so `git checkout` shows.

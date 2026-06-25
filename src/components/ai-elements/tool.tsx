@@ -23,7 +23,7 @@ import {
   TerminalIcon,
   ToolsIcon,
 } from "@hugeicons/core-free-icons";
-import { useChatStore } from "@/modules/ai/store/chatStore";
+import { useAiChatStore } from "@/features/ai-companion/ai/store/aiChatStore";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { DynamicToolUIPart, ToolUIPart } from "ai";
 import type { ComponentProps, ReactNode } from "react";
@@ -710,7 +710,7 @@ function SuggestCommandCard({
 }) {
   const [inserted, setInserted] = useState(false);
   const onInsert = () => {
-    const ok = useChatStore
+    const ok = useAiChatStore
       .getState()
       .live.injectIntoActivePty(command);
     if (ok) setInserted(true);

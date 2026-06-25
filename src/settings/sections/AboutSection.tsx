@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useUpdater } from "@/modules/updater";
+import { useUpdater } from "@/features/layout-chrome/updater";
 import { GithubIcon, Globe02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { getName, getVersion } from "@tauri-apps/api/app";

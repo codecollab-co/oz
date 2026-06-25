@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { usePreferencesStore } from "@/modules/settings/preferences";
-import { setShortcuts } from "@/modules/settings/store";
+import { usePreferencesStore } from "@/features/layout-chrome/settings/preferences";
+import { setShortcuts } from "@/features/layout-chrome/settings/store";
 import {
   getBindingTokens,
   SHORTCUTS,
@@ -10,7 +10,7 @@ import {
   type KeyBinding,
   type Shortcut,
   type ShortcutId,
-} from "@/modules/shortcuts/shortcuts";
+} from "@/features/layout-chrome/shortcuts/shortcuts";
 import {
   ArrowTurnBackwardIcon,
   Search01Icon,

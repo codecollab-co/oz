@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
-import { leafHasForegroundProcess, leafIds } from "@/modules/terminal";
-import { nextActiveInSpace, type Tab } from "@/modules/tabs";
+import { leafHasForegroundProcess, leafIds } from "@/features/shell-pty/terminal";
+import { nextActiveInSpace, type Tab } from "@/features/workspace-core/tabs";
 
 type Params = {
   tabs: Tab[];

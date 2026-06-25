@@ -2,9 +2,9 @@ import "../styles/globals.css";
 
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import ReactDOM from "react-dom/client";
-import { ThemeProvider } from "@/modules/theme";
+import { ChromeThemeProvider } from "@/features/layout-chrome/theme";
 import { USE_CUSTOM_WINDOW_CONTROLS } from "@/lib/platform";
-import { SettingsApp } from "./SettingsApp";
+import { ChromeSettingsApp } from "./ChromeSettingsApp";
 
 if (USE_CUSTOM_WINDOW_CONTROLS) {
   document.documentElement.dataset.chrome = "borderless";
@@ -13,9 +13,9 @@ if (USE_CUSTOM_WINDOW_CONTROLS) {
 ReactDOM.createRoot(
   document.getElementById("settings-root") as HTMLElement,
 ).render(
-  <ThemeProvider>
-    <SettingsApp />
-  </ThemeProvider>,
+  <ChromeThemeProvider>
+    <ChromeSettingsApp />
+  </ChromeThemeProvider>,
 );
 
 const showWindow = () => {

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
-import { usePreferencesStore } from "@/modules/settings/preferences";
+import { usePreferencesStore } from "@/features/layout-chrome/settings/preferences";
 import {
   EDITOR_THEME_AUTO,
   EDITOR_THEME_LABELS,
@@ -21,17 +21,17 @@ import {
   setBackgroundOpacity,
   setEditorTheme,
   type EditorThemePref,
-} from "@/modules/settings/store";
-import { useTheme } from "@/modules/theme";
+} from "@/features/layout-chrome/settings/store";
+import { useTheme } from "@/features/layout-chrome/theme";
 import {
   deleteBgImage,
   importBgImageFromFile,
-} from "@/modules/theme/bgImageStore";
-import { deleteCustomTheme, saveCustomTheme } from "@/modules/theme/customThemes";
-import { listBuiltinThemes } from "@/modules/theme/themes";
-import { validateTheme } from "@/modules/theme/validateTheme";
-import { deleteThemeFile, emitThemeEdit } from "@/modules/theme/themeFiles";
-import { DEFAULT_THEME_ID } from "@/modules/theme/types";
+} from "@/features/layout-chrome/theme/bgImageStore";
+import { deleteCustomTheme, saveCustomTheme } from "@/features/layout-chrome/theme/customThemes";
+import { listBuiltinThemes } from "@/features/layout-chrome/theme/themes";
+import { validateTheme } from "@/features/layout-chrome/theme/validateTheme";
+import { deleteThemeFile, emitThemeEdit } from "@/features/layout-chrome/theme/themeFiles";
+import { DEFAULT_THEME_ID } from "@/features/layout-chrome/theme/types";
 import { Edit02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { getCurrentWindow } from "@tauri-apps/api/window";

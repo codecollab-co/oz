@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import type { ProviderInfo } from "@/modules/ai/config";
+import type { ProviderInfo } from "@/features/ai-companion/ai/config";
 import {
   ArrowUpRight01Icon,
   Cancel01Icon,

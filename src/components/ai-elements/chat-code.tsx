@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useChatStore } from "@/modules/ai/store/chatStore";
+import { useAiChatStore } from "@/features/ai-companion/ai/store/aiChatStore";
 import {
   ArrowRight01Icon,
   CheckmarkCircle01Icon,
@@ -217,7 +217,7 @@ function RunInTerminalButton({ command }: { command: string }) {
   const tRef = useRef<number>(0);
   useEffect(() => () => window.clearTimeout(tRef.current), []);
   const onRun = () => {
-    const ok = useChatStore.getState().live.injectIntoActivePty(command);
+    const ok = useAiChatStore.getState().live.injectIntoActivePty(command);
     if (!ok) return;
     setSent(true);
     tRef.current = window.setTimeout(() => setSent(false), 1500);
