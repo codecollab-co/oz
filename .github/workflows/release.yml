@@ -88,11 +88,28 @@ jobs:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: "Terax ${{ github.ref_name }}"
+          releaseName: "Oz ${{ github.ref_name }}"
           releaseBody: "See the assets to download and install. Auto-update is built in."
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+      - name: Zip release binary (Windows)
+        if: matrix.platform == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          Compress-Archive -Path src-tauri/target/release/oz.exe -DestinationPath src-tauri/target/release/oz_windows_x64.zip
+          gh release upload ${{ github.ref_name }} src-tauri/target/release/oz_windows_x64.zip --clobber --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Zip release binary (Linux)
+        if: matrix.platform == 'ubuntu-22.04' && startsWith(github.ref, 'refs/tags/')
+        run: |
+          zip -j src-tauri/target/release/oz_linux_x64.zip src-tauri/target/release/oz
+          gh release upload ${{ github.ref_name }} src-tauri/target/release/oz_linux_x64.zip --clobber --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Strip the bundled libwayland-* libs from the AppImage so it loads the
       # host copies at runtime. The Ubuntu 22.04 build host ships libwayland
@@ -149,8 +166,8 @@ jobs:
             test ! -e "squashfs-root/usr/lib/$lib" \
               || { echo "lib still present after repack: $lib"; exit 1; }
           done
-          test -x squashfs-root/usr/bin/terax \
-            || { echo "terax binary missing from repacked AppImage"; exit 1; }
+          test -x squashfs-root/usr/bin/oz \
+            || { echo "oz binary missing from repacked AppImage"; exit 1; }
           popd >/dev/null
 
           cp "$WORK/$BASENAME" "$APPIMAGE"
@@ -198,3 +215,32 @@ jobs:
           mv latest.json.tmp latest.json
 
           gh release upload "$TAG" latest.json --clobber --repo "$GITHUB_REPOSITORY"
+
+  publish-npm:
+    needs: [publish-tauri, patch-appimage-updater]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Set dynamic version in wrapper package.json
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          echo "Setting version to $VERSION"
+          jq --arg version "$VERSION" '.version = $version' npm-wrapper/package.json > npm-wrapper/package.json.tmp
+          mv npm-wrapper/package.json.tmp npm-wrapper/package.json
+
+      - name: Publish to npm
+        run: |
+          cd npm-wrapper
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
