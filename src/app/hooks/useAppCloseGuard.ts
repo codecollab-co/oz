@@ -1,7 +1,7 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
-import type { Tab } from "@/modules/tabs";
-import { leafHasForegroundProcess, leafIds } from "@/modules/terminal";
+import type { Tab } from "@/features/workspace-core/tabs";
+import { leafHasForegroundProcess, leafIds } from "@/features/shell-pty/terminal";
 
 async function anyTerminalBusy(tabs: Tab[]): Promise<boolean> {
   const leaves = tabs.flatMap((t) =>

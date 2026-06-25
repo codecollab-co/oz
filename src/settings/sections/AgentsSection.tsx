@@ -9,24 +9,24 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { AGENT_ICONS } from "@/modules/ai/components/AgentSwitcher";
+import { AGENT_ICONS } from "@/features/ai-companion/ai/components/AgentSwitcher";
 import {
   BUILTIN_AGENTS,
   type Agent,
   type AgentIconId,
-} from "@/modules/ai/lib/agents";
+} from "@/features/ai-companion/ai/lib/agents";
 import {
   isValidHandle,
   normalizeHandle,
   type Snippet,
-} from "@/modules/ai/lib/snippets";
-import { newAgentId, useAgentsStore } from "@/modules/ai/store/agentsStore";
+} from "@/features/ai-companion/ai/lib/snippets";
+import { newAgentId, useAiAgentsStore } from "@/features/ai-companion/ai/store/aiAgentsStore";
 import {
   newSnippetId,
   useSnippetsStore,
-} from "@/modules/ai/store/snippetsStore";
-import { usePreferencesStore } from "@/modules/settings/preferences";
-import { setCustomInstructions } from "@/modules/settings/store";
+} from "@/features/ai-companion/ai/store/snippetsStore";
+import { usePreferencesStore } from "@/features/layout-chrome/settings/preferences";
+import { setCustomInstructions } from "@/features/layout-chrome/settings/store";
 import {
   Add01Icon,
   CheckmarkCircle02Icon,
@@ -49,12 +49,12 @@ const ICON_OPTIONS: AgentIconId[] = [
 
 export function AgentsSection() {
   const customInstructions = usePreferencesStore((s) => s.customInstructions);
-  const customAgents = useAgentsStore((s) => s.customAgents);
-  const activeAgentId = useAgentsStore((s) => s.activeId);
-  const setActiveAgentId = useAgentsStore((s) => s.setActiveId);
-  const upsertAgent = useAgentsStore((s) => s.upsert);
-  const removeAgent = useAgentsStore((s) => s.remove);
-  const hydrateAgents = useAgentsStore((s) => s.hydrate);
+  const customAgents = useAiAgentsStore((s) => s.customAgents);
+  const activeAgentId = useAiAgentsStore((s) => s.activeId);
+  const setActiveAgentId = useAiAgentsStore((s) => s.setActiveId);
+  const upsertAgent = useAiAgentsStore((s) => s.upsert);
+  const removeAgent = useAiAgentsStore((s) => s.remove);
+  const hydrateAgents = useAiAgentsStore((s) => s.hydrate);
 
   const snippets = useSnippetsStore((s) => s.snippets);
   const upsertSnippet = useSnippetsStore((s) => s.upsert);

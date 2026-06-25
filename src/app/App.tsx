@@ -10,62 +10,62 @@ import { usePresence } from "@/lib/usePresence";
 import { quoteShellArg } from "@/lib/shellQuote";
 import { useZoom } from "@/lib/useZoom";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { AgentNotificationsBridge } from "@/modules/agents";
+import { AgentNotificationsBridge } from "@/features/ai-companion/agents";
 import {
   AgentRunBridge,
-  AiMiniWindow,
+  AiCompMiniWindow,
   LocalAgentNotificationsBridge,
   SelectionAskAi,
   useAiBootstrap,
   useAiLiveBridge,
-  useChatStore,
+  useAiChatStore,
   useSelectionAskAi,
-} from "@/modules/ai";
-import { AiComposerProvider } from "@/modules/ai/lib/composer";
-import { native } from "@/modules/ai/lib/native";
+} from "@/features/ai-companion/ai";
+import { AiComposerProvider } from "@/features/ai-companion/ai/lib/aiComposer";
+import { native } from "@/features/ai-companion/ai/lib/native";
 import {
   CommandPalette,
   createCommandItems,
-} from "@/modules/command-palette";
+} from "@/features/layout-chrome/command-palette";
 import {
   NewEditorDialog,
   useEditorFileSync,
   type EditorPaneHandle,
-} from "@/modules/editor";
-import { FileExplorer, type FileExplorerHandle } from "@/modules/explorer";
-import type { GitHistorySearchHandle } from "@/modules/git-history";
+} from "@/features/code-pane/editor";
+import { WorkspaceFileExplorer, type FileExplorerHandle } from "@/features/workspace-core/explorer";
+import type { GitHistorySearchHandle } from "@/features/vcs-git/git-history";
 import {
-  Header,
+  ChromeHeader,
   type SearchInlineHandle,
   type SearchTarget,
-} from "@/modules/header";
-import type { PreviewPaneHandle } from "@/modules/preview";
-import { openSettingsWindow } from "@/modules/settings/openSettingsWindow";
-import { usePreferencesStore } from "@/modules/settings/preferences";
+} from "@/features/layout-chrome/header";
+import type { PreviewPaneHandle } from "@/features/workspace-core/preview";
+import { openSettingsWindow } from "@/features/layout-chrome/settings/openSettingsWindow";
+import { usePreferencesStore } from "@/features/layout-chrome/settings/preferences";
 import { isMarkdownPath } from "@/lib/utils";
 import {
   useGlobalShortcuts,
   type ShortcutHandlers,
   type ShortcutId,
-} from "@/modules/shortcuts";
+} from "@/features/layout-chrome/shortcuts";
 import {
-  SidebarRail,
+  ChromeSidebarRail,
   SIDEBAR_MAX_WIDTH,
   SIDEBAR_MIN_WIDTH,
   useSidebarPanel,
-} from "@/modules/sidebar";
+} from "@/features/layout-chrome/sidebar";
 import {
-  SourceControlPanel,
+  VcsGitControlPanel,
   useSourceControlContext,
-} from "@/modules/source-control";
-import { StatusBar } from "@/modules/statusbar";
+} from "@/features/vcs-git/source-control";
+import { ChromeStatusBar } from "@/features/layout-chrome/statusbar";
 import {
-  TabSwitcherHud,
-  useTabs,
+  WorkspaceTabSwitcherHud,
+  useWorkspaceTabs,
   useTabSwitcher,
   useWindowTitle,
   useWorkspaceCwd,
-} from "@/modules/tabs";
+} from "@/features/workspace-core/tabs";
 import {
   clearFocusedTerminal,
   disposeSession,
@@ -76,17 +76,17 @@ import {
   type TerminalPaneHandle,
   useTerminalFileDrop,
   writeToSession,
-} from "@/modules/terminal";
+} from "@/features/shell-pty/terminal";
 import {
-  SpaceSwitcher,
+  WorkspaceSpaceSwitcher,
   useSpaces,
   useSpacePersistence,
   useSpacesBoot,
-} from "@/modules/spaces";
-import { DEFAULT_SPACE_ID } from "@/modules/tabs/lib/useTabs";
-import { ThemeProvider, useThemeFileEditing } from "@/modules/theme";
-import { UpdaterDialog } from "@/modules/updater";
-import { useWorkspaceEnvStore, type WorkspaceEnv } from "@/modules/workspace";
+} from "@/features/workspace-core/spaces";
+import { DEFAULT_SPACE_ID } from "@/features/workspace-core/tabs/lib/useWorkspaceTabs";
+import { ChromeThemeProvider, useThemeFileEditing } from "@/features/layout-chrome/theme";
+import { ChromeUpdaterDialog } from "@/features/layout-chrome/updater";
+import { useWorkspaceEnvStore, type WorkspaceEnv } from "@/features/shell-pty/workspace";
 import type { SearchAddon } from "@xterm/addon-search";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CloseDialogs } from "./components/CloseDialogs";
@@ -138,7 +138,7 @@ export default function App() {
     closeActivePane,
     closePaneByLeaf,
     resetWorkspace,
-  } = useTabs(getLaunchDir() ? { cwd: getLaunchDir() } : undefined);
+  } = useWorkspaceTabs(getLaunchDir() ? { cwd: getLaunchDir() } : undefined);
 
   // Mirror `tabs` into a ref so callbacks scheduled with `setTimeout`
   // (e.g. cdInNewTab) read the latest pane state instead of a stale closure.
@@ -281,14 +281,14 @@ export default function App() {
     },
     [],
   );
-  const miniOpen = useChatStore((s) => s.mini.open);
+  const miniOpen = useAiChatStore((s) => s.mini.open);
   const miniPresence = usePresence(miniOpen, 200);
-  const openMini = useChatStore((s) => s.openMini);
-  const focusInput = useChatStore((s) => s.focusInput);
-  const openPanel = useChatStore((s) => s.openPanel);
-  const panelOpen = useChatStore((s) => s.panelOpen);
-  const setLive = useChatStore((s) => s.setLive);
-  const respondToApproval = useChatStore((s) => s.respondToApproval);
+  const openMini = useAiChatStore((s) => s.openMini);
+  const focusInput = useAiChatStore((s) => s.focusInput);
+  const openPanel = useAiChatStore((s) => s.openPanel);
+  const panelOpen = useAiChatStore((s) => s.panelOpen);
+  const setLive = useAiChatStore((s) => s.setLive);
+  const respondToApproval = useAiChatStore((s) => s.respondToApproval);
 
   const { hasComposer, keysLoaded } = useAiBootstrap();
 
@@ -428,14 +428,14 @@ export default function App() {
       return;
     }
     if (panelOpen) {
-      useChatStore.getState().closePanel();
+      useAiChatStore.getState().closePanel();
     } else {
       openPanel();
       focusInput(null);
     }
   }, [hasComposer, panelOpen, openPanel, focusInput]);
 
-  const attachSelection = useChatStore((s) => s.attachSelection);
+  const attachSelection = useAiChatStore((s) => s.attachSelection);
 
   const handleAttachFileToAgent = useCallback(
     (path: string) => {
@@ -935,7 +935,7 @@ export default function App() {
   );
 
   const spaceSwitcher = (
-    <SpaceSwitcher
+    <WorkspaceSpaceSwitcher
       open={switcherOpen}
       onOpenChange={setSwitcherOpen}
       tabs={tabs}
@@ -1042,11 +1042,11 @@ export default function App() {
   });
 
   const shell = (
-    <ThemeProvider>
+    <ChromeThemeProvider>
       <TooltipProvider>
         <div className="relative flex h-screen flex-col overflow-hidden bg-background text-foreground">
           {!zenMode && (
-            <Header
+            <ChromeHeader
               tabs={spaceTabs}
               activeId={activeId}
               onSelect={setActiveId}
@@ -1092,7 +1092,7 @@ export default function App() {
                 <div className="flex h-full min-h-0 flex-col border-r border-border/60 bg-card">
                   <div key={sidebarView} className="min-h-0 flex-1 oz-panel-in">
                     {sidebarView === "explorer" ? (
-                      <FileExplorer
+                      <WorkspaceFileExplorer
                         ref={explorerRef}
                         rootPath={explorerRoot}
                         gitStatus={
@@ -1106,7 +1106,7 @@ export default function App() {
                         onAttachToAgent={handleAttachFileToAgent}
                       />
                     ) : (
-                      <SourceControlPanel
+                      <VcsGitControlPanel
                         open
                         sourceControl={sourceControl}
                         onOpenDiff={openGitDiffTab}
@@ -1115,7 +1115,7 @@ export default function App() {
                       />
                     )}
                   </div>
-                  <SidebarRail
+                  <ChromeSidebarRail
                     activeView={sidebarView}
                     onSelectView={persistSidebarView}
                     changedCount={sourceControl.changedCount}
@@ -1165,7 +1165,7 @@ export default function App() {
           </main>
 
           {!zenMode && (
-            <StatusBar
+            <ChromeStatusBar
               cwd={activeCwd}
               filePath={activeFilePath}
               home={home}
@@ -1197,7 +1197,7 @@ export default function App() {
           ) : null}
 
           {hasComposer && miniPresence.mounted ? (
-            <AiMiniWindow state={miniPresence.state} />
+            <AiCompMiniWindow state={miniPresence.state} />
           ) : null}
           {askPresence.mounted ? (
             <SelectionAskAi
@@ -1210,7 +1210,7 @@ export default function App() {
           ) : null}
 
           {switcherState && (
-            <TabSwitcherHud tabs={spaceTabs} state={switcherState} />
+            <WorkspaceTabSwitcherHud tabs={spaceTabs} state={switcherState} />
           )}
 
           <CommandPalette
@@ -1230,7 +1230,7 @@ export default function App() {
             onCreated={(path) => openFileTab(path)}
           />
 
-          <UpdaterDialog />
+          <ChromeUpdaterDialog />
 
           <CloseDialogs
             tabs={tabs}
@@ -1249,7 +1249,7 @@ export default function App() {
           />
         </div>
       </TooltipProvider>
-    </ThemeProvider>
+    </ChromeThemeProvider>
   );
 
   return <AiComposerProvider>{shell}</AiComposerProvider>;

@@ -1,11 +1,11 @@
 import { cn } from "@/lib/utils";
-import { AiInputBarConnect } from "@/modules/ai";
-import { Chip } from "@/modules/ai/components/Chip";
-import { ChipsRow } from "@/modules/ai/components/ChipsRow";
-import { useComposer } from "@/modules/ai/lib/composer";
-import { useBlockController } from "@/modules/terminal/lib/blockController";
-import { focusLeafInput } from "@/modules/terminal/lib/useTerminalSession";
-import { useTheme } from "@/modules/theme";
+import { AiInputBarConnect } from "@/features/ai-companion/ai";
+import { Chip } from "@/features/ai-companion/ai/components/Chip";
+import { ChipsRow } from "@/features/ai-companion/ai/components/ChipsRow";
+import { useComposer } from "@/features/ai-companion/ai/lib/aiComposer";
+import { useBlockController } from "@/features/shell-pty/terminal/lib/blockController";
+import { focusLeafInput } from "@/features/shell-pty/terminal/lib/usePtyTerminalSession";
+import { useTheme } from "@/features/layout-chrome/theme";
 import {
   AiContentGenerator02Icon,
   CommandLineIcon,
@@ -19,10 +19,10 @@ import { OsIcon } from "./OsIcon";
 import { useGitBranch } from "./useGitBranch";
 import { useSystemInfo } from "./useSystemInfo";
 
-const ShellInput = lazy(() => import("@/modules/terminal/block/ShellInput"));
-const AiComposerInput = lazy(() =>
-  import("@/modules/ai/components/AiComposerInput").then((m) => ({
-    default: m.AiComposerInput,
+const PtyShellInput = lazy(() => import("@/features/shell-pty/terminal/block/PtyShellInput"));
+const AiCompComposerInput = lazy(() =>
+  import("@/features/ai-companion/ai/components/AiCompComposerInput").then((m) => ({
+    default: m.AiCompComposerInput,
   })),
 );
 
@@ -153,7 +153,7 @@ export function WorkspaceInputBar({
               {isBlockTab && controller && activeLeafId != null && (
                 <div className={cn(effectiveMode !== "shell" && "hidden")}>
                   <Suspense fallback={null}>
-                    <ShellInput
+                    <PtyShellInput
                       leafId={activeLeafId}
                       mode={blockMode}
                       focused={effectiveMode === "shell"}
@@ -168,7 +168,7 @@ export function WorkspaceInputBar({
               {renderAi && (
                 <div className={cn(effectiveMode !== "ai" && "hidden")}>
                   <Suspense fallback={null}>
-                    <AiComposerInput />
+                    <AiCompComposerInput />
                   </Suspense>
                 </div>
               )}

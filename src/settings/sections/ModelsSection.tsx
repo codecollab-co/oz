@@ -28,7 +28,7 @@ import {
   type ProviderId,
   type ProviderInfo,
   type SttProvider,
-} from "@/modules/ai/config";
+} from "@/features/ai-companion/ai/config";
 import {
   clearKey,
   clearCustomEndpointKey,
@@ -37,9 +37,9 @@ import {
   setKey,
   setCustomEndpointKey,
   type CustomEndpointKeys,
-} from "@/modules/ai/lib/keyring";
-import { useChatStore } from "@/modules/ai/store/chatStore";
-import { usePreferencesStore } from "@/modules/settings/preferences";
+} from "@/features/ai-companion/ai/lib/keyring";
+import { useAiChatStore } from "@/features/ai-companion/ai/store/aiChatStore";
+import { usePreferencesStore } from "@/features/layout-chrome/settings/preferences";
 import {
   emitKeysChanged,
   setAutocompleteEnabled,
@@ -62,7 +62,7 @@ import {
   setGroqSttModel,
   setSttProvider,
   setWhispercppBaseURL,
-} from "@/modules/settings/store";
+} from "@/features/layout-chrome/settings/store";
 import {
   Add01Icon,
   ArrowDown01Icon,
@@ -235,7 +235,7 @@ export function ModelsSection() {
     // and the next send throws "Custom endpoint not found". Fall back to another
     // endpoint when one remains, else the default model.
     const remaining = customEndpoints.filter((e) => e.id !== id);
-    const { selectedModelId, setSelectedModelId } = useChatStore.getState();
+    const { selectedModelId, setSelectedModelId } = useAiChatStore.getState();
     if (selectedModelId === deadModelId) {
       setSelectedModelId(
         remaining[0] ? compatModelIdForEndpoint(remaining[0].id) : DEFAULT_MODEL_ID,

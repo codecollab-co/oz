@@ -8,7 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { Tab } from "@/modules/tabs";
+import type { Tab } from "@/features/workspace-core/tabs";
 
 type Props = {
   tabs: Tab[];

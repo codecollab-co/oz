@@ -1,17 +1,17 @@
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
-import { AiDiffStack, EditorStack, GitDiffStack } from "@/modules/editor";
-import { GitHistoryStack } from "@/modules/git-history";
-import { MarkdownStack } from "@/modules/markdown";
-import { PreviewStack } from "@/modules/preview";
-import type { Tab } from "@/modules/tabs";
-import { TerminalStack } from "@/modules/terminal";
+import { AiDiffPaneStack, CodePaneStack, GitDiffPaneStack } from "@/features/code-pane/editor";
+import { VcsGitHistoryStack } from "@/features/vcs-git/git-history";
+import { MarkdownPaneStack } from "@/features/code-pane/markdown";
+import { WorkspacePreviewStack } from "@/features/workspace-core/preview";
+import type { Tab } from "@/features/workspace-core/tabs";
+import { PtyTerminalStack } from "@/features/shell-pty/terminal";
 
-type TerminalStackProps = ComponentProps<typeof TerminalStack>;
-type EditorStackProps = ComponentProps<typeof EditorStack>;
-type PreviewStackProps = ComponentProps<typeof PreviewStack>;
-type AiDiffStackProps = ComponentProps<typeof AiDiffStack>;
-type GitHistoryStackProps = ComponentProps<typeof GitHistoryStack>;
+type TerminalStackProps = ComponentProps<typeof PtyTerminalStack>;
+type EditorStackProps = ComponentProps<typeof CodePaneStack>;
+type PreviewStackProps = ComponentProps<typeof WorkspacePreviewStack>;
+type AiDiffStackProps = ComponentProps<typeof AiDiffPaneStack>;
+type GitHistoryStackProps = ComponentProps<typeof VcsGitHistoryStack>;
 
 type Props = {
   tabs: Tab[];
@@ -77,7 +77,7 @@ export function WorkspaceSurface({
         )}
         aria-hidden={!isTerminalTab}
       >
-        <TerminalStack
+        <PtyTerminalStack
           tabs={tabs}
           activeId={activeId}
           registerHandle={registerTerminalHandle}
@@ -94,7 +94,7 @@ export function WorkspaceSurface({
         )}
         aria-hidden={!isEditorTab}
       >
-        <EditorStack
+        <CodePaneStack
           tabs={tabs}
           activeId={activeId}
           registerHandle={registerEditorHandle}
@@ -110,7 +110,7 @@ export function WorkspaceSurface({
         )}
         aria-hidden={!isPreviewTab}
       >
-        <PreviewStack
+        <WorkspacePreviewStack
           tabs={tabs}
           activeId={activeId}
           registerHandle={registerPreviewHandle}
@@ -124,7 +124,7 @@ export function WorkspaceSurface({
         )}
         aria-hidden={!isMarkdownTab}
       >
-        <MarkdownStack
+        <MarkdownPaneStack
           tabs={tabs}
           activeId={activeId}
           onSetMarkdownView={onSetMarkdownView}
@@ -137,7 +137,7 @@ export function WorkspaceSurface({
         )}
         aria-hidden={!isAiDiffTab}
       >
-        <AiDiffStack
+        <AiDiffPaneStack
           tabs={tabs}
           activeId={activeId}
           onAccept={onAiDiffAccept}
@@ -151,7 +151,7 @@ export function WorkspaceSurface({
         )}
         aria-hidden={!isGitDiffTab}
       >
-        <GitDiffStack tabs={tabs} activeId={activeId} />
+        <GitDiffPaneStack tabs={tabs} activeId={activeId} />
       </div>
       <div
         className={cn(
@@ -160,7 +160,7 @@ export function WorkspaceSurface({
         )}
         aria-hidden={!isGitHistoryTab}
       >
-        <GitHistoryStack
+        <VcsGitHistoryStack
           tabs={tabs}
           activeId={activeId}
           onOpenCommitFile={onOpenCommitFile}
