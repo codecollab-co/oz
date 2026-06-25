@@ -1,0 +1,3 @@
+# Persistent Terminal Sessions and Layout Serialization
+
+We decided to persist terminal layout states by serializing the active window geometry (split grids, tab metadata, directory paths, and terminal scrollback caches) to local session state files rather than attempting full operating-system-level process state serialization (checkpoint/restore). Serializing running CPU/memory processes is extremely heavy, fragile across Windows and macOS, and poses security issues. Restoring tab layouts, historical output buffers, and working directories provides a seamless UX recovery without performance cost.
