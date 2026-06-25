@@ -1,4 +1,4 @@
-# @codecollab-co/oz
+# @codecollab.co/oz
 
 Oz is an open-source, lightweight, AI-native terminal emulator (ADE - agentic development environment). It integrates a GPU-accelerated WebGL terminal, code editor, file explorer, source control manager, and a first-class AI agent subsystem that runs against your own keys or local inference engines.
 
@@ -9,9 +9,9 @@ This package is a multi-platform CLI launcher for the desktop application. When 
 Install globally via npm or pnpm:
 
 ```bash
-npm install -g @codecollab-co/oz
+npm install -g @codecollab.co/oz
 # or
-pnpm add -g @codecollab-co/oz
+pnpm add -g @codecollab.co/oz
 ```
 
 ## Usage
@@ -25,7 +25,7 @@ oz
 Or run without global installation:
 
 ```bash
-npx @codecollab-co/oz
+npx @codecollab.co/oz
 ```
 
 ## Documentation & Source Code
