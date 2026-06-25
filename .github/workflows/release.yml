@@ -63,17 +63,19 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Write Apple API key to disk
-        if: startsWith(matrix.platform, 'macos') && secrets.APPLE_API_KEY_PATH != ''
-        shell: bash
         env:
           KEY_CONTENT: ${{ secrets.APPLE_API_KEY_PATH }}
+        if: startsWith(matrix.platform, 'macos') && env.KEY_CONTENT != ''
+        shell: bash
         run: |
           mkdir -p "$HOME/private_keys"
           printf '%s' "$KEY_CONTENT" > "$HOME/private_keys/AuthKey.p8"
           echo "APPLE_API_KEY_PATH=$HOME/private_keys/AuthKey.p8" >> "$GITHUB_ENV"
 
       - name: Disable updater signing if keys are missing
-        if: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY == '' }}
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        if: env.TAURI_SIGNING_PRIVATE_KEY == ''
         shell: bash
         run: |
           echo "No tauri signing key found, disabling updater artifacts creation"
@@ -206,9 +208,10 @@ jobs:
       contents: write
     steps:
       - name: Patch latest.json with re-signed AppImage signature
-        if: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        if: env.TAURI_SIGNING_PRIVATE_KEY != ''
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF_NAME}"
