@@ -276,6 +276,14 @@ jobs:
       - name: Publish to npm
         run: |
           cd npm-wrapper
-          npm publish --access public
+          PKG_NAME=$(jq -r '.name' package.json)
+          PKG_VERSION=$(jq -r '.version' package.json)
+          echo "Checking if $PKG_NAME@$PKG_VERSION is already published..."
+          if npm view "$PKG_NAME@$PKG_VERSION" version >/dev/null 2>&1; then
+            echo "Version $PKG_VERSION of $PKG_NAME is already published. Skipping publish."
+          else
+            echo "Publishing $PKG_NAME@$PKG_VERSION to NPM..."
+            npm publish --access public
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
