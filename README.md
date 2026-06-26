@@ -90,7 +90,22 @@ Oz is a lightweight open-source terminal (ADE) built on Tauri 2 + Rust and React
 
 ## Install
 
-Latest installers are on the [Releases](https://github.com/codecollab-co/oz/releases/latest) page. Oz auto-updates from there.
+### Via NPM (Cross-platform Launcher)
+
+You can launch or install the Oz desktop application directly from your shell using NPM or `npx`:
+
+```bash
+# Run immediately without global installation
+npx @codecollab.co/oz
+
+# Or install globally and run
+npm install -g @codecollab.co/oz
+oz
+```
+
+### Desktop Installers
+
+Latest precompiled installers (DMG, MSI, DEB, RPM, AppImage) are on the [Releases](https://github.com/codecollab-co/oz/releases/latest) page. Oz auto-updates from there.
 
 ### Windows notes
 
