@@ -6,12 +6,17 @@
 
   <p>
     <img src="https://img.shields.io/github/v/release/codecollab-co/oz?label=version&color=blue" alt="version" />
+    <a href="https://www.npmjs.com/package/@codecollab.co/oz" target="_blank">
+      <img src="https://img.shields.io/npm/v/@codecollab.co/oz?label=npm&color=blue" alt="npm" />
+    </a>
     <img src="https://img.shields.io/github/downloads/codecollab-co/oz/total?label=downloads&color=blue" alt="downloads" />
     <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey" alt="platform" />
   </p>
 
   <p>
     <a href="https://github.com/codecollab-co/oz">Source code</a>
+    &nbsp;·&nbsp;
+    <a href="https://www.npmjs.com/package/@codecollab.co/oz" target="_blank">NPM registry</a>
   </p>
 </div>
 
