@@ -98,9 +98,9 @@ Oz is a lightweight open-source terminal (ADE) built on Tauri 2 + Rust and React
 
 ## Install
 
-### Via NPM (Cross-platform Launcher)
+### Via NPM (Cross-platform Launcher) — recommended during the test phase
 
-You can launch or install the Oz desktop application directly from your shell using NPM or `npx`:
+You can install and launch the Oz desktop application directly from your shell using NPM or `npx`:
 
 ```bash
 # Run immediately without global installation
@@ -111,9 +111,28 @@ npm install -g @codecollab.co/oz
 oz
 ```
 
+This is the smoothest option while Oz is still unsigned (see [Unsigned builds](#unsigned-builds) below). The launcher downloads the app over HTTPS — which avoids the macOS "damaged" / Windows SmartScreen prompts entirely — installs it into your Applications / Start Menu, and launches it detached. Extra commands:
+
+```bash
+oz install     # download + install without launching
+oz uninstall   # remove the installed app and cached binaries
+```
+
 ### Desktop Installers
 
-Latest precompiled installers (DMG, MSI, DEB, RPM, AppImage) are on the [Releases](https://github.com/codecollab-co/oz/releases/latest) page. Oz auto-updates from there.
+Latest precompiled installers (DMG, MSI, DEB, RPM, AppImage) are on the [Releases](https://github.com/codecollab-co/oz/releases/latest) page. Oz auto-updates from there. If you download these through a browser, read [Unsigned builds](#unsigned-builds) first.
+
+### Unsigned builds
+
+Oz is **not code-signed or notarized yet** (no paid Apple/Windows certificates during the test phase). The app itself is safe — the OS just can't verify a signature. The `npx @codecollab.co/oz` launcher above sidesteps all of this and is the recommended path. If you instead downloaded an installer from the Releases page through a browser, clear the OS block once:
+
+- **macOS** ("Oz is damaged and can't be opened"): drag `Oz.app` into `/Applications`, then run:
+  ```bash
+  xattr -dr com.apple.quarantine /Applications/Oz.app
+  ```
+  Open it normally afterwards. (On Apple Silicon the "damaged" message is Gatekeeper refusing an un-notarized app, not a corrupt download.)
+- **Windows** ("Windows protected your PC"): click **More info** → **Run anyway**. Or right-click the installer → **Properties** → tick **Unblock** → **OK**.
+- **Linux**: `chmod +x Oz_*.AppImage` and ensure FUSE is installed. Without FUSE: `./Oz_*.AppImage --appimage-extract-and-run`. The `.deb` / `.rpm` packages don't need this.
 
 ### Windows notes
 
