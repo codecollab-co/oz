@@ -1,13 +1,32 @@
 #!/usr/bin/env node
 
+/*
+ * Oz cross-platform launcher / installer.
+ *
+ * Oz is not code-signed or notarized yet (no paid Apple / Windows certificates
+ * during the test phase). Browser-downloaded installers therefore get blocked by
+ * Gatekeeper ("Oz is damaged") on macOS and SmartScreen on Windows, because the
+ * browser tags them with a quarantine flag / Mark-of-the-Web.
+ *
+ * This launcher sidesteps that entirely: it fetches the release archive over
+ * plain HTTPS (Node, not a browser), which never applies those tags. It then
+ * installs Oz where the OS expects an app to live so it shows up like a normal
+ * installed application, and launches it detached so it does not hold the
+ * terminal hostage.
+ *
+ *   oz            download (first run), install, and launch
+ *   oz install    download and install only (no launch)
+ *   oz uninstall  remove the installed app and cached binaries
+ */
+
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { spawn, execSync } = require('child_process');
+const { spawn, spawnSync, execSync } = require('child_process');
 const https = require('https');
 
 const VERSION = require('../package.json').version;
-const REPO = "codecollab-co/oz";
+const REPO = 'codecollab-co/oz';
 
 const homeDir = os.homedir();
 const ozDir = path.join(homeDir, '.oz');
@@ -16,52 +35,67 @@ const binDir = path.join(ozDir, 'bin', VERSION);
 const platform = os.platform();
 const arch = os.arch();
 
-let binaryName = '';
+let binaryRelPath = '';
 let artifactName = '';
 
 if (platform === 'darwin') {
-  binaryName = 'Oz.app/Contents/MacOS/oz';
+  binaryRelPath = 'Oz.app/Contents/MacOS/oz';
   artifactName = arch === 'arm64' ? 'Oz_aarch64.app.tar.gz' : 'Oz_x64.app.tar.gz';
 } else if (platform === 'linux') {
-  binaryName = 'oz';
+  binaryRelPath = 'oz';
   artifactName = 'oz_linux_x64.zip';
 } else if (platform === 'win32') {
-  binaryName = 'oz.exe';
+  binaryRelPath = 'oz.exe';
   artifactName = 'oz_windows_x64.zip';
 } else {
   console.error(`Unsupported platform: ${platform}`);
   process.exit(1);
 }
 
-const binaryPath = path.join(binDir, binaryName);
+const binaryPath = path.join(binDir, binaryRelPath);
 
-if (fs.existsSync(binaryPath)) {
-  runBinary();
+const argv = process.argv.slice(2);
+const subcommand = argv[0];
+
+if (subcommand === 'uninstall') {
+  uninstall();
+} else if (subcommand === 'install') {
+  ensureBinary(() => {
+    const target = installDesktop();
+    console.log(`\nOz installed: ${target}`);
+    console.log('Launch it from your applications menu, or run `oz`.');
+    console.log('Remove it any time with `oz uninstall`.');
+  });
 } else {
-  downloadAndExtract();
-}
-
-function runBinary() {
-  const args = process.argv.slice(2);
-  const child = spawn(binaryPath, args, { stdio: 'inherit' });
-  child.on('close', (code) => {
-    process.exit(code);
+  ensureBinary((downloaded) => {
+    // Reuse an existing install unless we just pulled a new version.
+    const existing = installedTarget();
+    const target = !downloaded && existing ? existing : installDesktop();
+    launch(target, argv);
   });
 }
 
-function downloadAndExtract() {
-  console.log(`Oz is not downloaded yet. Downloading version v${VERSION} for ${platform}-${arch}...`);
-  if (!fs.existsSync(binDir)) {
-    fs.mkdirSync(binDir, { recursive: true });
+// ------------------------------------------------------------------ download
+
+function ensureBinary(done) {
+  if (fs.existsSync(binaryPath)) {
+    done(false);
+  } else {
+    downloadAndExtract(() => done(true));
   }
+}
+
+function downloadAndExtract(done) {
+  console.log(`Oz v${VERSION} is not downloaded yet. Fetching for ${platform}-${arch}...`);
+  fs.mkdirSync(binDir, { recursive: true });
 
   const url = `https://github.com/${REPO}/releases/download/v${VERSION}/${artifactName}`;
   const archivePath = path.join(binDir, artifactName);
   const file = fs.createWriteStream(archivePath);
 
-  function get(url) {
-    https.get(url, (response) => {
-      if (response.statusCode === 302 || response.statusCode === 301) {
+  function get(u) {
+    https.get(u, (response) => {
+      if (response.statusCode === 301 || response.statusCode === 302) {
         get(response.headers.location);
         return;
       }
@@ -70,16 +104,14 @@ function downloadAndExtract() {
         process.exit(1);
       }
 
-      const totalSize = parseInt(response.headers['content-length'], 10) || 0;
-      let downloaded = 0;
-
+      const total = parseInt(response.headers['content-length'], 10) || 0;
+      let received = 0;
       response.on('data', (chunk) => {
-        downloaded += chunk.length;
-        if (totalSize > 0) {
-          const percent = ((downloaded / totalSize) * 100).toFixed(1);
-          process.stdout.write(`\rDownloading: ${percent}%`);
+        received += chunk.length;
+        if (total > 0) {
+          process.stdout.write(`\rDownloading: ${((received / total) * 100).toFixed(1)}%`);
         } else {
-          process.stdout.write(`\rDownloading: ${(downloaded / 1024 / 1024).toFixed(2)} MB`);
+          process.stdout.write(`\rDownloading: ${(received / 1024 / 1024).toFixed(2)} MB`);
         }
       });
 
@@ -87,22 +119,14 @@ function downloadAndExtract() {
 
       file.on('finish', () => {
         file.close(() => {
-          console.log('\nDownload complete. Extracting files...');
+          console.log('\nDownload complete. Extracting...');
           try {
-            if (platform === 'darwin') {
-              execSync(`tar -xzf "${archivePath}" -C "${binDir}"`);
-            } else if (platform === 'linux') {
-              execSync(`unzip -o "${archivePath}" -d "${binDir}"`);
-            } else if (platform === 'win32') {
-              execSync(`powershell -Command "Expand-Archive -Path '${archivePath}' -DestinationPath '${binDir}' -Force"`);
-            }
+            extract(archivePath);
             fs.unlinkSync(archivePath);
-            
             if (platform !== 'win32') {
               fs.chmodSync(binaryPath, 0o755);
             }
-            console.log('Extraction complete. Launching Oz...');
-            runBinary();
+            done();
           } catch (err) {
             console.error('Failed to extract files:', err.message);
             process.exit(1);
@@ -117,4 +141,183 @@ function downloadAndExtract() {
   }
 
   get(url);
+}
+
+function extract(archivePath) {
+  if (platform === 'darwin') {
+    execSync(`tar -xzf "${archivePath}" -C "${binDir}"`);
+  } else if (platform === 'linux') {
+    execSync(`unzip -o "${archivePath}" -d "${binDir}"`);
+  } else if (platform === 'win32') {
+    execSync(`powershell -NoProfile -Command "Expand-Archive -Path '${archivePath}' -DestinationPath '${binDir}' -Force"`);
+  }
+}
+
+// ------------------------------------------------------------------- install
+
+function installDesktop() {
+  if (platform === 'darwin') return installMac();
+  if (platform === 'win32') return installWindows();
+  if (platform === 'linux') return installLinux();
+  return binaryPath;
+}
+
+function installedTarget() {
+  if (platform === 'darwin') {
+    const inApps = '/Applications/Oz.app';
+    const inHome = path.join(homeDir, 'Applications', 'Oz.app');
+    if (fs.existsSync(inApps)) return inApps;
+    if (fs.existsSync(inHome)) return inHome;
+    return null;
+  }
+  if (platform === 'win32') {
+    return fs.existsSync(startMenuShortcut()) ? binaryPath : null;
+  }
+  if (platform === 'linux') {
+    return fs.existsSync(linuxDesktopFile()) ? binaryPath : null;
+  }
+  return binaryPath;
+}
+
+// macOS: copy the .app into /Applications (or ~/Applications) so it appears as
+// an installed app, strip the quarantine flag, and repair the ad-hoc signature
+// if extraction invalidated it (that broken signature is the "damaged" cause).
+function installMac() {
+  const source = path.join(binDir, 'Oz.app');
+  sanitizeMacApp(source);
+
+  const candidates = [
+    '/Applications/Oz.app',
+    path.join(homeDir, 'Applications', 'Oz.app'),
+  ];
+
+  for (const dest of candidates) {
+    try {
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.rmSync(dest, { recursive: true, force: true });
+      // ditto preserves the bundle structure and code signature; cp/tar can strip it.
+      const res = spawnSync('ditto', [source, dest]);
+      if (res.status !== 0) throw new Error('ditto failed');
+      sanitizeMacApp(dest);
+      return dest;
+    } catch {
+      // try the next location (e.g. /Applications not writable -> ~/Applications)
+    }
+  }
+
+  // Could not install anywhere writable; run it in place instead.
+  return source;
+}
+
+function sanitizeMacApp(app) {
+  if (!fs.existsSync(app)) return;
+  // Remove com.apple.quarantine so Gatekeeper stops blocking the unsigned app.
+  spawnSync('xattr', ['-cr', app]);
+  // If the ad-hoc signature is missing/broken, re-apply it. arm64 macOS refuses
+  // to launch code with an invalid signature and reports it as "damaged".
+  const verify = spawnSync('codesign', ['--verify', '--deep', app]);
+  if (verify.status !== 0) {
+    spawnSync('codesign', ['--force', '--deep', '--sign', '-', app]);
+  }
+}
+
+function startMenuShortcut() {
+  const appData = process.env.APPDATA || path.join(homeDir, 'AppData', 'Roaming');
+  return path.join(appData, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Oz.lnk');
+}
+
+// Windows: clear any Mark-of-the-Web and drop a Start Menu shortcut so Oz is
+// discoverable like an installed app.
+function installWindows() {
+  try {
+    spawnSync('powershell', ['-NoProfile', '-Command',
+      `Unblock-File -Path '${binaryPath}'`]);
+  } catch {}
+  try {
+    const lnk = startMenuShortcut();
+    fs.mkdirSync(path.dirname(lnk), { recursive: true });
+    const ps =
+      `$s=(New-Object -ComObject WScript.Shell).CreateShortcut('${lnk}');` +
+      `$s.TargetPath='${binaryPath}';` +
+      `$s.WorkingDirectory='${binDir}';` +
+      `$s.Description='Oz';$s.Save()`;
+    spawnSync('powershell', ['-NoProfile', '-Command', ps]);
+  } catch {}
+  return binaryPath;
+}
+
+function linuxDesktopFile() {
+  return path.join(homeDir, '.local', 'share', 'applications', 'oz.desktop');
+}
+
+// Linux: write a .desktop entry so Oz shows up in the application menu.
+function installLinux() {
+  try {
+    const desktopFile = linuxDesktopFile();
+    fs.mkdirSync(path.dirname(desktopFile), { recursive: true });
+    const entry = [
+      '[Desktop Entry]',
+      'Type=Application',
+      'Name=Oz',
+      'Comment=AI-native terminal',
+      `Exec="${binaryPath}"`,
+      'Terminal=false',
+      'Categories=Development;Utility;',
+    ].join('\n') + '\n';
+    fs.writeFileSync(desktopFile, entry);
+  } catch {}
+  return binaryPath;
+}
+
+// -------------------------------------------------------------------- launch
+
+function launch(target, args) {
+  if (platform === 'darwin') {
+    // `open` hands off to LaunchServices: the app detaches from the terminal,
+    // shows in the Dock, and the shell prompt returns immediately.
+    const openArgs = [target];
+    if (args.length) openArgs.push('--args', ...args);
+    const child = spawn('open', openArgs, { detached: true, stdio: 'ignore' });
+    child.on('error', (err) => {
+      console.error('Failed to launch Oz:', err.message);
+      process.exit(1);
+    });
+    child.unref();
+    return;
+  }
+
+  const child = spawn(target, args, { detached: true, stdio: 'ignore' });
+  child.on('error', (err) => {
+    console.error('Failed to launch Oz:', err.message);
+    process.exit(1);
+  });
+  child.unref();
+}
+
+// ----------------------------------------------------------------- uninstall
+
+function uninstall() {
+  const removed = [];
+  const tryRm = (p) => {
+    try {
+      if (p && fs.existsSync(p)) {
+        fs.rmSync(p, { recursive: true, force: true });
+        removed.push(p);
+      }
+    } catch {}
+  };
+
+  if (platform === 'darwin') {
+    tryRm('/Applications/Oz.app');
+    tryRm(path.join(homeDir, 'Applications', 'Oz.app'));
+  } else if (platform === 'win32') {
+    tryRm(startMenuShortcut());
+  } else if (platform === 'linux') {
+    tryRm(linuxDesktopFile());
+  }
+  tryRm(ozDir);
+
+  console.log(removed.length
+    ? `Removed:\n  ${removed.join('\n  ')}`
+    : 'Nothing to remove.');
 }

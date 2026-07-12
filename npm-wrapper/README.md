@@ -28,6 +28,31 @@ Or run without global installation:
 npx @codecollab.co/oz
 ```
 
+Other commands:
+
+```bash
+oz install     # download + install into Applications / Start Menu, without launching
+oz uninstall   # remove the installed app and cached binaries (~/.oz)
+```
+
+## Why install via this launcher?
+
+Oz is not code-signed or notarized yet (test phase — no paid Apple/Windows
+certificates). Installers downloaded through a **browser** are tagged by the OS
+(macOS quarantine flag, Windows Mark-of-the-Web), so Gatekeeper reports
+"Oz is damaged" and SmartScreen shows "Windows protected your PC".
+
+This launcher fetches the release over plain HTTPS instead of a browser, so those
+tags are never applied. It also:
+
+- copies the app into `/Applications` (macOS), adds a Start Menu shortcut (Windows),
+  or writes a `.desktop` entry (Linux) so Oz shows up like a normally installed app;
+- strips `com.apple.quarantine` and repairs the ad-hoc signature on macOS defensively;
+- launches Oz **detached**, so your terminal is freed immediately instead of being
+  held open until you quit the app.
+
+No Apple Developer account or signing secret is required.
+
 ## Documentation & Source Code
 
 For the full codebase, roadmap, and build options, visit the GitHub repository:
