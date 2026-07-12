@@ -14,37 +14,14 @@ export function OzLogo({ className, size = 24 }: Props) {
       width={size}
       height={size}
     >
-      <defs>
-        <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#89b4fa" />
-          <stop offset="100%" stop-color="#cba6f7" />
-        </linearGradient>
-        <filter id="logo-glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="2" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
-        </filter>
-      </defs>
-      <rect
-        x="10"
-        y="10"
-        width="80"
-        height="80"
-        rx="18"
-        ry="18"
-        fill="none"
-        stroke="url(#logo-grad)"
-        strokeWidth="6"
-        strokeDasharray="12 6"
-        filter="url(#logo-glow)"
-      />
+      <rect x="8" y="8" width="84" height="84" rx="22" fill="#10B981" />
       <path
-        d="M35 35 H65 L35 65 H65"
+        d="M40 37 L57 50 L40 63"
         fill="none"
-        stroke="url(#logo-grad)"
-        strokeWidth="8"
+        stroke="#04160F"
+        strokeWidth="9"
         strokeLinecap="round"
         strokeLinejoin="round"
-        filter="url(#logo-glow)"
       />
     </svg>
   );
