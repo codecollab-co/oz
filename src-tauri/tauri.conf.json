@@ -94,7 +94,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNCQUJGRDhBQjYwRTM0NjkKUldScE5BNjJpdjJyT3dIN0dqbUpHaDA4QW1GaDVmTTllRXdZVk96dFNTRUZ3Y2hiVGszYjFqRloK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZERkE3QjEzNTEwRkI0MTcKUldRWHRBOVJFM3Y2L2V6K0praVBReGN0dnhUWXk4NkRTWFh5ai85OHA5WmxnZkE1bkk4QnJEYTUK",
       "endpoints": [
         "https://github.com/codecollab-co/oz/releases/latest/download/latest.json"
       ]
