@@ -562,11 +562,17 @@ function DefaultModelPicker({
           disabled={!hasAny}
           className="h-8 flex-1 justify-between gap-2 px-2.5 text-[11.5px]"
         >
-          <span className="flex items-center gap-2 truncate">
-            <ProviderIcon provider={m.provider} size={13} />
-            <span className="truncate">{m.label}</span>
-            <span className="text-muted-foreground">· {m.hint}</span>
-          </span>
+          {hasAny ? (
+            <span className="flex items-center gap-2 truncate">
+              <ProviderIcon provider={m.provider} size={13} />
+              <span className="truncate">{m.label}</span>
+              <span className="text-muted-foreground">· {m.hint}</span>
+            </span>
+          ) : (
+            <span className="truncate text-muted-foreground">
+              Add a provider to choose a model
+            </span>
+          )}
           <HugeiconsIcon
             icon={ArrowDown01Icon}
             size={11}
