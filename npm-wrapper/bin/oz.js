@@ -40,7 +40,10 @@ let artifactName = '';
 
 if (platform === 'darwin') {
   binaryRelPath = 'Oz.app/Contents/MacOS/oz';
-  artifactName = arch === 'arm64' ? 'Oz_aarch64.app.tar.gz' : 'Oz_x64.app.tar.gz';
+  // Tauri names the macOS updater bundle with the version, e.g. Oz_0.2.3_aarch64.app.tar.gz
+  artifactName = arch === 'arm64'
+    ? `Oz_${VERSION}_aarch64.app.tar.gz`
+    : `Oz_${VERSION}_x64.app.tar.gz`;
 } else if (platform === 'linux') {
   binaryRelPath = 'oz';
   artifactName = 'oz_linux_x64.zip';
