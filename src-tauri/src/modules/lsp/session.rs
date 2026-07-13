@@ -32,6 +32,11 @@ pub struct LspSession {
     child: Arc<SharedChild>,
     stdin: Mutex<Option<ChildStdin>>,
     pub(super) exited: Arc<AtomicBool>,
+    // Windows has no process groups; a KILL_ON_JOB_CLOSE Job Object owns the
+    // whole tree so forked helpers (tsserver, rust-analyzer's proc-macro host)
+    // die with the session. Dropping/closing the handle tears the tree down.
+    #[cfg(windows)]
+    job: Mutex<Option<crate::modules::pty::job::PtyJob>>,
 }
 
 impl LspSession {
@@ -53,6 +58,9 @@ impl LspSession {
         unsafe {
             libc::kill(-(self.child.id() as libc::pid_t), libc::SIGKILL);
         }
+        // Closing the Job Object (KILL_ON_JOB_CLOSE) takes the tree down.
+        #[cfg(windows)]
+        drop(self.job.lock().unwrap().take());
         let _ = self.child.kill();
     }
 }
@@ -97,6 +105,16 @@ pub fn spawn(
         SharedChild::spawn(&mut cmd)
             .map_err(|e| format!("lsp spawn failed for {}: {e}", binary.display()))?,
     );
+    // Windows: bind the server to a KILL_ON_JOB_CLOSE Job Object so its whole
+    // tree dies with the session (there are no process groups to signal).
+    #[cfg(windows)]
+    let job = match crate::modules::pty::job::PtyJob::create_for(child.id()) {
+        Ok(j) => Some(j),
+        Err(e) => {
+            log::warn!("lsp id={id}: Job Object setup failed: {e}; tree cleanup best-effort");
+            None
+        }
+    };
     let kill_on_fail = || {
         let _ = child.kill();
     };
@@ -118,6 +136,8 @@ pub fn spawn(
         child: child.clone(),
         stdin: Mutex::new(Some(stdin)),
         exited: exited.clone(),
+        #[cfg(windows)]
+        job: Mutex::new(job),
     });
 
     let session_reader = session.clone();
@@ -152,7 +172,12 @@ pub fn spawn(
                 }
             }
         })
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            // The server is already running; a thread-limit failure here would
+            // otherwise orphan it. Tear the whole tree down before bailing.
+            session.kill();
+            e.to_string()
+        })?;
 
     let stderr_tail: Arc<Mutex<std::collections::VecDeque<String>>> =
         Arc::new(Mutex::new(std::collections::VecDeque::new()));
@@ -189,7 +214,12 @@ pub fn spawn(
             }
             push_line(&mut line);
         })
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            // The server is already running; a thread-limit failure here would
+            // otherwise orphan it. Tear the whole tree down before bailing.
+            session.kill();
+            e.to_string()
+        })?;
 
     let kill_reason: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
     {
@@ -228,7 +258,12 @@ pub fn spawn(
                     thread::sleep(MEM_POLL_INTERVAL);
                 }
             })
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| {
+            // The server is already running; a thread-limit failure here would
+            // otherwise orphan it. Tear the whole tree down before bailing.
+            session.kill();
+            e.to_string()
+        })?;
     }
 
     let child_waiter = child;
@@ -264,7 +299,12 @@ pub fn spawn(
                 log::debug!("lsp id={id} exit send failed (channel closed)");
             }
         })
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            // The server is already running; a thread-limit failure here would
+            // otherwise orphan it. Tear the whole tree down before bailing.
+            session.kill();
+            e.to_string()
+        })?;
 
     Ok(session)
 }

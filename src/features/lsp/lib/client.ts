@@ -96,13 +96,17 @@ export async function formatDocumentAndWait(
   // Edits are offsets into the requested snapshot; typing during the
   // round-trip would corrupt the document.
   if (view.state.doc !== doc) return "done";
-  view.dispatch({
-    changes: edits.map((e) => ({
+  // CodeMirror requires changes in ascending document order; some servers
+  // return formatting edits bottom-up, which would throw "Changes not in
+  // order" and abort the whole format.
+  const changes = edits
+    .map((e) => ({
       from: offsetOf(doc, e.range.start),
       to: offsetOf(doc, e.range.end),
       insert: e.newText,
-    })),
-  });
+    }))
+    .sort((a, b) => a.from - b.from || a.to - b.to);
+  view.dispatch({ changes });
   return "done";
 }
 

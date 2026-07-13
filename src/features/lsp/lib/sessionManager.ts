@@ -85,19 +85,11 @@ export async function acquireDocExtension(
   if (!root) return null;
   const key = `${preset.id}\u0000${root}`;
   if (crashedOut(key)) return null;
-  if (
-    !sessions.has(key) &&
-    [...sessions.values()].filter((m) => m.preset.id === preset.id).length >=
-      MAX_SESSIONS_PER_PRESET
-  ) {
-    console.warn(
-      `[lsp] session cap reached for ${preset.id}, skipping ${root}`,
-    );
-    return null;
-  }
 
-  // Evict idle sessions of other roots; the age guard keeps simultaneous
-  // multi-root opens from evicting each other's newborn sessions.
+  // Evict idle sessions of other roots first — closeSession deletes from
+  // `sessions` synchronously, so this must run before the cap count or an
+  // evictable idle session would still block a new root. The age guard keeps
+  // simultaneous multi-root opens from evicting each other's newborn sessions.
   if (!sessions.has(key)) {
     const now = Date.now();
     for (const m of sessions.values()) {
@@ -110,6 +102,17 @@ export async function acquireDocExtension(
         void closeSession(m);
       }
     }
+  }
+
+  if (
+    !sessions.has(key) &&
+    [...sessions.values()].filter((m) => m.preset.id === preset.id).length >=
+      MAX_SESSIONS_PER_PRESET
+  ) {
+    console.warn(
+      `[lsp] session cap reached for ${preset.id}, skipping ${root}`,
+    );
+    return null;
   }
 
   const managed =

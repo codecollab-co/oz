@@ -4,6 +4,9 @@ use std::fmt;
 
 // Cap so a misbehaving server can't make us buffer unbounded data.
 const MAX_CONTENT_LEN: usize = 64 * 1024 * 1024;
+// Headers before the blank-line terminator are tiny in practice; cap the scan
+// so a server that never sends \r\n\r\n can't grow the buffer without bound.
+const MAX_HEADER_LEN: usize = 64 * 1024;
 const HEADER_TERMINATOR: &[u8] = b"\r\n\r\n";
 
 #[derive(Debug, PartialEq, Eq)]
@@ -64,6 +67,9 @@ impl FrameDecoder {
                             self.phase = Phase::Body { len };
                         }
                         None => {
+                            if self.buf.len() > MAX_HEADER_LEN {
+                                return Err(FramingError::ContentTooLarge(self.buf.len()));
+                            }
                             // Terminator may straddle this chunk and the next.
                             self.phase = Phase::Headers {
                                 scan_from: self.buf.len().saturating_sub(HEADER_TERMINATOR.len() - 1),
@@ -207,6 +213,22 @@ mod tests {
             d.push(raw.as_bytes()),
             Err(FramingError::ContentTooLarge(_))
         ));
+    }
+
+    #[test]
+    fn unterminated_headers_are_capped() {
+        let mut d = FrameDecoder::default();
+        // A server that never sends the blank-line terminator must not grow
+        // the buffer without bound.
+        let chunk = vec![b'x'; 8 * 1024];
+        let mut err = None;
+        for _ in 0..16 {
+            if let Err(e) = d.push(&chunk) {
+                err = Some(e);
+                break;
+            }
+        }
+        assert!(matches!(err, Some(FramingError::ContentTooLarge(_))));
     }
 
     #[test]

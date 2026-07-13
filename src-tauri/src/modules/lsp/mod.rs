@@ -129,11 +129,27 @@ fn resolve_root(path: &str, markers: &[String]) -> Option<String> {
         if home.as_deref() == Some(dir) {
             return None;
         }
-        if markers.iter().any(|m| dir.join(m).exists()) {
+        // Markers are user-configurable; a marker with path separators (or an
+        // absolute path) would make `dir.join(m)` escape the walked directory
+        // and probe an arbitrary path. Only honor plain basenames.
+        if markers
+            .iter()
+            .any(|m| is_bare_marker(m) && dir.join(m).exists())
+        {
             return Some(dir.to_string_lossy().into_owned());
         }
         dir = dir.parent()?;
     }
+}
+
+// A safe marker is exactly one normal path component — no separators, no `..`,
+// no root/prefix. Rejects entries like "/etc/passwd" or "../secrets".
+fn is_bare_marker(marker: &str) -> bool {
+    let mut components = std::path::Path::new(marker).components();
+    matches!(
+        (components.next(), components.next()),
+        (Some(std::path::Component::Normal(_)), None)
+    )
 }
 
 // Async so a stalled server with a full stdin pipe blocks a worker
@@ -182,6 +198,28 @@ mod tests {
             &["Cargo.toml".to_string()],
         );
         assert_eq!(found, Some(root.to_string_lossy().into_owned()));
+    }
+
+    #[test]
+    fn resolve_root_ignores_absolute_and_traversal_markers() {
+        // An always-present absolute path must not be honored as a marker, or
+        // it would resolve every directory as a project root.
+        assert!(is_bare_marker("Cargo.toml"));
+        assert!(!is_bare_marker("/etc/passwd"));
+        assert!(!is_bare_marker("../secrets"));
+        assert!(!is_bare_marker("a/b"));
+        assert!(!is_bare_marker(""));
+
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let nested = tmp.path().join("a").join("b");
+        std::fs::create_dir_all(&nested).unwrap();
+        std::fs::write(nested.join("f.rs"), "").unwrap();
+
+        let found = resolve_root(
+            nested.join("f.rs").to_str().unwrap(),
+            &["/etc/hosts".to_string()],
+        );
+        assert_eq!(found, None);
     }
 
     #[test]

@@ -464,17 +464,29 @@ export async function loadPreferences(): Promise<Preferences> {
   };
 }
 
+// Serialize the read-modify-write so concurrent toggles (e.g. two tabs' status
+// pills flipped in the same tick) can't clobber each other's changes.
+let lspActivationWriteQueue: Promise<unknown> = Promise.resolve();
+
 export async function setLspActivation(
   id: string,
   value: LspActivation | null,
 ): Promise<void> {
-  const current =
-    ((await store.get(KEY_LSP_ACTIVATION)) as Record<string, LspActivation>) ??
-    {};
-  const next = { ...current };
-  if (value === null) delete next[id];
-  else next[id] = value;
-  await writePref(KEY_LSP_ACTIVATION, next);
+  const run = lspActivationWriteQueue.then(async () => {
+    const current =
+      ((await store.get(KEY_LSP_ACTIVATION)) as Record<
+        string,
+        LspActivation
+      >) ?? {};
+    const next = { ...current };
+    if (value === null) delete next[id];
+    else next[id] = value;
+    await writePref(KEY_LSP_ACTIVATION, next);
+  });
+  // Chain on a non-rejecting tail so one failed write can't wedge the queue,
+  // but still surface this write's own error to its caller.
+  lspActivationWriteQueue = run.catch(() => {});
+  await run;
 }
 
 export async function setLspCustomServers(
